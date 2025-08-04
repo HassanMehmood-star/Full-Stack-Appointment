@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+  //output   = "../generated/prisma"  // ✅ Optional, keep or remove as you prefer
+}
+
+datasource db {
+  provider = "mysql"  // ✅ Use MySQL
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         Int        @id @default(autoincrement())
+  name       String
+  email      String     @unique
+  password   String
+  role       Role       @default(PATIENT)
+
+  // Relations
+  appointmentsAsPatient Appointment[] @relation("PatientAppointments")
+  appointmentsAsDoctor  Appointment[] @relation("DoctorAppointments")
+
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+}
+
+model Appointment {
+  id          Int               @id @default(autoincrement())
+  date        DateTime
+  description String
+  status      AppointmentStatus @default(PENDING)
+
+  patientId   Int
+  doctorId    Int
+
+  patient     User              @relation("PatientAppointments", fields: [patientId], references: [id])
+  doctor      User              @relation("DoctorAppointments", fields: [doctorId], references: [id])
+
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  seenByDoctor Boolean          @default(false)  // ✅ Add this field
+}
+
+enum Role {
+  PATIENT
+  DOCTOR
+  ADMIN
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  REJECTED
+}
