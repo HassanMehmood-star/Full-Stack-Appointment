@@ -83,6 +83,15 @@ async getUnseenAppointments(@Req() req) {
     throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
   }
 }
+@Patch(':id/seen')
+async markSingleSeen(@Param('id') id: string, @Req() req) {
+  try {
+    return await this.appointmentsService.markSingleAppointmentSeen(req.user, parseInt(id));
+  } catch (error) {
+    throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+  }
+}
+
 
 
 }

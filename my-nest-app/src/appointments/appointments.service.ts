@@ -227,6 +227,28 @@ async markAppointmentsSeen(user: any) {
   });
 
   return { message: 'Marked as seen' };
+
+}
+
+async markSingleAppointmentSeen(user: any, appointmentId: number) {
+  if (user.role !== 'DOCTOR') throw new Error('Unauthorized');
+
+  const appointment = await this.prisma.appointment.findUnique({
+    where: { id: appointmentId },
+  });
+
+  if (!appointment || appointment.doctorId !== (user.userId || user.sub)) {
+    throw new Error('Appointment not found or not yours');
+  }
+
+  await this.prisma.appointment.update({
+    where: { id: appointmentId },
+    data: {
+      seenByDoctor: true,
+    },
+  });
+
+  return { message: 'Appointment marked as seen' };
 }
 
 
