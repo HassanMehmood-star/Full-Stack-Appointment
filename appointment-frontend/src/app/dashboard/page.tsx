@@ -167,8 +167,19 @@ export default function DashboardPage() {
   }, [user]);
 
   // ...rest of your code unchanged...
+useEffect(() => {
+  const script = document.createElement("script");
+  script.src = "//code.tidio.co/hf1pxsetpho4jy5h0v5mrwgtodaamm1r.js"; // ✅ Already working
+  script.async = true;
+  document.body.appendChild(script);
 
-  
+  return () => {
+    document.body.removeChild(script);
+  };
+}, []);
+
+
+
 
   const handleDeleteAppointment = async (id: number) => {
     if (!window.confirm('Are you sure you want to delete this appointment?')) return;
@@ -423,6 +434,20 @@ const handleStatusUpdate = async (appointmentId: number, newStatus: string) => {
       </div>
     )
   }
+
+
+  
+
+//   useEffect(() => {
+//   const script = document.createElement("script");
+//   script.src = "//code.tidio.co/hf1pxsetpho4jy5h0v5mrwgtodaamm1r.js"; // 🔁 Replace with your actual Tidio project ID
+//   script.async = true;
+//   document.body.appendChild(script);
+
+//   return () => {
+//     document.body.removeChild(script); // 🧹 Clean up on unmount
+//   };
+// }, []);
 
   const roleContent = getRoleSpecificContent()
   const navigationItems = getNavigationItems()
