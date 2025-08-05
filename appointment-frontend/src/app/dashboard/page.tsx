@@ -1,12 +1,15 @@
 "use client"
 import { Bell } from "lucide-react";
 import { useEffect, useState } from "react"
+// import NotificationIcon from "../../components/Notificationicon";
 
+import Link from "next/link";
 interface Appointment {
   id: number;
   date: string;
   description: string;
   status: string;
+   seenByDoctor: boolean; // ✅ Add this line
   patient?: { id: number; name: string; email: string };
   doctor?: { id: number; name: string; email: string };
 }
@@ -71,33 +74,39 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    const fetchUnseenAppointments = async () => {
-      if (!user || user.role !== "DOCTOR") return;
+   const fetchUnseenAppointments = async () => {
+  if (!user || user.role !== "DOCTOR") return;
 
-      const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token");
 
-      try {
-        const res = await fetch("http://localhost:4000/api/appointments/doctor/unseen", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
+  try {
+    const res = await fetch("http://localhost:4000/api/appointments", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
 
-        if (res.ok) {
-          const unseenAppointments = await res.json();
+    if (res.ok) {
+      const data = await res.json();
+      const allAppointments = data.appointments || [];
 
-          setStats((prev) => ({
-            ...prev,
-            unseen: unseenAppointments.length,
-          }));
-        } else {
-          console.error("Failed to fetch unseen appointments");
-        }
-      } catch (err) {
-        console.error("Error fetching unseen appointments", err);
-      }
-    };
+      const unseenByDoctor = allAppointments.filter(
+        (apt: Appointment) => apt.seenByDoctor === false
+      );
+
+      setStats((prev) => ({
+        ...prev,
+        unseen: unseenByDoctor.length,
+      }));
+    } else {
+      console.error("Failed to fetch appointments for unseen check");
+    }
+  } catch (err) {
+    console.error("Error fetching appointments for unseen check", err);
+  }
+};
+
 
     fetchUnseenAppointments();
   }, [user]);
@@ -133,13 +142,13 @@ export default function DashboardPage() {
 
           setAppointments(appointments);
 
-          const calculatedStats = {
-            total: appointments.length,
-            pending: appointments.filter((apt: Appointment) => apt.status === "PENDING").length,
-            confirmed: appointments.filter((apt: Appointment) => apt.status === "CONFIRMED").length,
-            completed: appointments.filter((apt: Appointment) => apt.status === "COMPLETED").length,
-            unseen: stats.unseen,
-          };
+         const calculatedStats = {
+  total: appointments.length,
+  pending: appointments.filter((apt: Appointment) => apt.status === "PENDING").length,
+  confirmed: appointments.filter((apt: Appointment) => apt.status === "CONFIRMED").length,
+  completed: appointments.filter((apt: Appointment) => apt.status === "COMPLETED").length,
+  unseen: appointments.filter((apt: Appointment) => apt.seenByDoctor === false).length,
+};
 
           setStats(calculatedStats);
         } else {
@@ -219,7 +228,7 @@ const handleStatusUpdate = async (appointmentId: number, newStatus: string) => {
           pending: updatedAppointments.filter((apt) => apt.status === "PENDING").length,
           confirmed: updatedAppointments.filter((apt) => apt.status === "CONFIRMED").length,
           completed: updatedAppointments.filter((apt) => apt.status === "COMPLETED").length,
-            unseen: stats.unseen, 
+          unseen: stats.unseen, 
           
         };
 
@@ -273,22 +282,12 @@ const handleStatusUpdate = async (appointmentId: number, newStatus: string) => {
       path: "/appointments",
       count: stats.total > 0 ? stats.total.toString() : null,
     },
-{
+  {
   id: "notifications",
   title: "Notifications",
-  icon: (
-    <div className="relative w-6 h-6 flex items-center justify-center">
-      <Bell className="w-5 h-5 text-gray-700" />
-      {stats.unseen > 0 && (
-        <>
-          <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-600 animate-ping" />
-          <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-600" />
-        </>
-      )}
-    </div>
-  ),
-  path: "/notifications",
-  count: stats.unseen > 0 ? stats.unseen.toString() : null,
+  icon: "🔔",
+  path: "/notifications", // ✅ This is the path it will navigate to
+ count: stats.unseen > 0 ? stats.unseen.toString() : null,
 },
 
   ];
@@ -1012,30 +1011,40 @@ const handleStatusUpdate = async (appointmentId: number, newStatus: string) => {
         <div className="nav-section">
           <div className="nav-group">
             <div className="nav-group-title">Navigation</div>
-            {navigationItems.map((item) => (
-              <div
-                key={item.id}
-                className={`nav-item ${activeItem === item.id ? "active" : ""}`}
-                onClick={() => setActiveItem(item.id)}
-              >
-                <span className="nav-icon">{item.icon}</span>
-                <span className="nav-text">{item.title}</span>
-                {item.count && <span className="nav-count">{item.count}</span>}
-              </div>
-            ))}
+<ul className="list-none">
+  {navigationItems.map((item) => {
+    // Debugging logs
+    console.log("Sidebar item:", item);
+    console.log(`Item ID: ${item.id}, Count: ${item.count}`);
+
+    return (
+      <li key={item.id}>
+        <Link
+          href={item.path}
+          className="flex justify-between items-center px-4 py-2 hover:bg-gray-100 rounded-md"
+        >
+          <div className="flex items-center gap-2">
+            <span>{item.icon}</span>
+            <span>{item.title}</span>
+          </div>
+
+          {/* ✅ Show count only if it's a number > 0 */}
+          {item.count && parseInt(item.count) > 0 && (
+            <span className="bg-red-500 text-white text-xs rounded-full px-2">
+              {item.count}
+            </span>
+          )}
+        </Link>
+      </li>
+    );
+  })}
+</ul>
+
+
+
           </div>
         </div>
 
-        {/* <div className="quick-actions">
-          <button className="quick-action-btn">
-            <span>➕</span>
-            {!sidebarCollapsed && <span>New Appointment</span>}
-          </button>
-          <button className="quick-action-btn">
-            <span>🔔</span>
-            {!sidebarCollapsed && <span>Notifications</span>}
-          </button>
-        </div> */}
 
         <div className="user-section">
           <div className="user-avatar">{getUserInitials(user.name)}</div>
