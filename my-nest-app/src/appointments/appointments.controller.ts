@@ -9,6 +9,16 @@ import { RolesGuard } from '../common/guards/roles.guard';
 export class AppointmentsController {
   constructor(private readonly appointmentsService: AppointmentsService) {}
 
+
+@Get('stats')
+async getStats(@Req() req) {
+  try {
+    return await this.appointmentsService.getAppointmentStats(req.user);
+  } catch (error) {
+    throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+}
+
   @Get()
   async findMyAppointments(@Req() req) {
     try {
@@ -91,6 +101,7 @@ async markSingleSeen(@Param('id') id: string, @Req() req) {
     throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
   }
 }
+
 
 
 

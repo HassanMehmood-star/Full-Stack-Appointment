@@ -33,7 +33,7 @@ export default function LoginPage() {
         // Store token and user data
         localStorage.setItem('token', data.access_token);
         localStorage.setItem('user', JSON.stringify(data.user));
-        
+         console.log("Bearer " + data.access_token);
         // Redirect to dashboard
         router.push('/dashboard');
       } else {

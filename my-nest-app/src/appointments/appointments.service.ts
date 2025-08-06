@@ -251,6 +251,24 @@ async markSingleAppointmentSeen(user: any, appointmentId: number) {
   return { message: 'Appointment marked as seen' };
 }
 
+async getAppointmentStats(user: any) {
+  const whereClause: any = {};
+
+  if (user.role === 'DOCTOR') {
+    whereClause.doctorId = user.userId || user.sub;
+  } else if (user.role === 'PATIENT') {
+    whereClause.patientId = user.userId || user.sub;
+  }
+
+  const [total, pending, confirmed, completed] = await Promise.all([
+    this.prisma.appointment.count({ where: whereClause }),
+    this.prisma.appointment.count({ where: { ...whereClause, status: 'PENDING' } }),
+    this.prisma.appointment.count({ where: { ...whereClause, status: 'CONFIRMED' } }),
+    this.prisma.appointment.count({ where: { ...whereClause, status: 'COMPLETED' } }),
+  ]);
+
+  return { total, pending, confirmed, completed };
+}
 
 
 }
